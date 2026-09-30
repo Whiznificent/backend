@@ -1,3 +1,12 @@
+[workspace]
+members = [".", "fuzz"]
+
+# When building fuzz targets in release mode (cargo fuzz run ...) we want
+# debug info so crash stack traces are symbolised.  This is a workspace-level
+# profile so it applies to both the main crate and the fuzz crate.
+[profile.release]
+debug = true
+
 [package]
 name = "zenith-backend"
 version = "0.1.0"
