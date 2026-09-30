@@ -21,6 +21,31 @@ async fn execute_two_leg_strategy(app: &TestApp, token: &str) -> String {
 }
 
 #[tokio::test]
+async fn execute_strategy_rejects_mixed_underlyings() {
+    let app = TestApp::spawn().await;
+    let token = app.login().await;
+
+    let (status, body) = app
+        .post_with(
+            "/api/v1/strategies/execute",
+            serde_json::json!({
+                "legs": [
+                    { "underlying": "BTC", "strike": 68000, "expiry_days": 30, "option_type": "call", "position_type": "long", "contracts": 1 },
+                    { "underlying": "ETH", "strike": 4500, "expiry_days": 30, "option_type": "call", "position_type": "short", "contracts": 1 }
+                ]
+            }),
+            Some(&token),
+        )
+        .await;
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(body["error"].as_str().unwrap().contains("same underlying"));
+
+    let (_, positions) = app.get_with("/api/v1/positions", Some(&token)).await;
+    assert_eq!(positions.as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
 async fn list_strategies_excludes_plain_single_leg_positions() {
     let app = TestApp::spawn().await;
     let token = app.login().await;

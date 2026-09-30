@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO alerts (id, wallet_address, underlying, condition, target_price) VALUES (?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "6f12f5b441683073d0a6cb209a3ce97f50c8f8814f7a298537c9473975d1add7"
+}

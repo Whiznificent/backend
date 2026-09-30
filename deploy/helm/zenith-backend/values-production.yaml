@@ -1,0 +1,42 @@
+replicaCount: 3
+worker:
+  replicaCount: 1
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 12
+  cpu:
+    averageUtilization: 65
+  requestRate:
+    enabled: true
+    metricName: http_requests_per_second
+    averageValue: "25"
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+externalSecrets:
+  enabled: true
+  secretStoreRef:
+    name: production-secrets
+    kind: ClusterSecretStore
+  remoteKey: zenith/production/backend
+  targetName: zenith-backend-runtime
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 2000m
+    memory: 1Gi
+
+workerResources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 768Mi

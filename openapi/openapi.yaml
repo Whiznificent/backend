@@ -1,0 +1,855 @@
+openapi: 3.0.3
+info:
+  title: Zenith Backend API
+  version: 0.1.0
+  description: |
+    Zenith paper-trading API. V1 retains legacy error bodies by default;
+    v2 returns the structured ApiError envelope. Both API versions remain
+    available side by side.
+  license:
+    name: MIT
+servers:
+  - url: /
+tags:
+  - name: System
+  - name: Market data
+  - name: Authentication
+  - name: Trading
+  - name: Portfolio
+  - name: Strategies
+  - name: Watchlist
+  - name: Alerts
+paths:
+  /health:
+    get:
+      operationId: health
+      tags: [System]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/versions/usage:
+    get:
+      operationId: getVersionUsage
+      tags: [System]
+      responses:
+        "200":
+          description: In-process API request totals by version.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionUsage"
+  /api/v1/spot:
+    get:
+      operationId: getSpotV1
+      tags: [Market data]
+      responses:
+        "200":
+          description: Spot prices and base vols.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpotResponseV1"
+  /api/v2/spot:
+    get:
+      operationId: getSpotV2
+      tags: [Market data]
+      responses:
+        "200":
+          description: Spot prices and implied vols in the v2 asset DTO.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpotResponseV2"
+  /api/v1/price:
+    get:
+      operationId: getOptionPriceV1
+      tags: [Market data]
+      parameters:
+        - $ref: "#/components/parameters/Underlying"
+        - $ref: "#/components/parameters/Strike"
+        - $ref: "#/components/parameters/ExpiryDays"
+        - $ref: "#/components/parameters/OptionType"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /api/v2/price:
+    get:
+      operationId: getOptionPriceV2
+      tags: [Market data]
+      parameters:
+        - $ref: "#/components/parameters/Underlying"
+        - $ref: "#/components/parameters/Strike"
+        - $ref: "#/components/parameters/ExpiryDays"
+        - $ref: "#/components/parameters/OptionType"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /api/v1/iv:
+    get:
+      operationId: getImpliedVolatilityV1
+      tags: [Market data]
+      parameters:
+        - $ref: "#/components/parameters/Underlying"
+        - $ref: "#/components/parameters/Strike"
+        - $ref: "#/components/parameters/ExpiryDays"
+        - $ref: "#/components/parameters/OptionType"
+        - name: market_price
+          in: query
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+        "422":
+          $ref: "#/components/responses/ApiError"
+  /api/v2/iv:
+    get:
+      operationId: getImpliedVolatilityV2
+      tags: [Market data]
+      parameters:
+        - $ref: "#/components/parameters/Underlying"
+        - $ref: "#/components/parameters/Strike"
+        - $ref: "#/components/parameters/ExpiryDays"
+        - $ref: "#/components/parameters/OptionType"
+        - name: market_price
+          in: query
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+        "422":
+          $ref: "#/components/responses/ApiError"
+  /api/v1/chain:
+    get:
+      operationId: getOptionChainV1
+      tags: [Market data]
+      parameters:
+        - $ref: "#/components/parameters/Underlying"
+        - $ref: "#/components/parameters/ExpiryDays"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/chain:
+    get:
+      operationId: getOptionChainV2
+      tags: [Market data]
+      parameters:
+        - $ref: "#/components/parameters/Underlying"
+        - $ref: "#/components/parameters/ExpiryDays"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/expiries/{underlying}:
+    get:
+      operationId: getExpiryCalendarV1
+      tags: [Market data]
+      parameters:
+        - $ref: "#/components/parameters/UnderlyingPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/expiries/{underlying}:
+    get:
+      operationId: getExpiryCalendarV2
+      tags: [Market data]
+      parameters:
+        - $ref: "#/components/parameters/UnderlyingPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/stats:
+    get:
+      operationId: getProtocolStatsV1
+      tags: [Market data]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/stats:
+    get:
+      operationId: getProtocolStatsV2
+      tags: [Market data]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/ws/spot:
+    get:
+      operationId: subscribeToSpotV1
+      tags: [Market data]
+      description: WebSocket upgrade; the OpenAPI operation documents the handshake.
+      x-websocket: true
+      responses:
+        "101":
+          description: WebSocket upgrade accepted.
+  /api/v2/ws/spot:
+    get:
+      operationId: subscribeToSpotV2
+      tags: [Market data]
+      description: WebSocket upgrade; the OpenAPI operation documents the handshake.
+      x-websocket: true
+      responses:
+        "101":
+          description: WebSocket upgrade accepted.
+  /api/v1/auth/nonce:
+    post:
+      operationId: requestWalletNonceV1
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NonceRequest"
+      responses:
+        "200":
+          description: Single-use wallet signing challenge.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonceResponse"
+  /api/v2/auth/nonce:
+    post:
+      operationId: requestWalletNonceV2
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NonceRequest"
+      responses:
+        "200":
+          description: Single-use wallet signing challenge.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonceResponse"
+  /api/v1/auth/verify:
+    post:
+      operationId: verifyWalletSignatureV1
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyRequest"
+      responses:
+        "200":
+          description: Bearer session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyResponse"
+  /api/v2/auth/verify:
+    post:
+      operationId: verifyWalletSignatureV2
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyRequest"
+      responses:
+        "200":
+          description: Bearer session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyResponse"
+  /api/v1/auth/me:
+    get:
+      operationId: getCurrentWalletV1
+      tags: [Authentication]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /api/v2/auth/me:
+    get:
+      operationId: getCurrentWalletV2
+      tags: [Authentication]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /api/v1/account:
+    get:
+      operationId: getAccountV1
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/account:
+    get:
+      operationId: getAccountV2
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/positions:
+    get:
+      operationId: listPositionsV1
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: strategy_id, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: offset, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/positions/open:
+    post:
+      operationId: openPositionV1
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PositionRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/JsonOk"
+        "422":
+          $ref: "#/components/responses/ApiError"
+  /api/v2/positions:
+    get:
+      operationId: listPositionsV2
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: strategy_id, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: offset, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/positions/open:
+    post:
+      operationId: openPositionV2
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PositionRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/JsonOk"
+        "422":
+          $ref: "#/components/responses/ApiError"
+  /api/v1/positions/{id}/close:
+    post:
+      operationId: closePositionV1
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/positions/{id}/close:
+    post:
+      operationId: closePositionV2
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/positions/{id}/roll:
+    post:
+      operationId: rollPositionV1
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RollRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/positions/{id}/roll:
+    post:
+      operationId: rollPositionV2
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RollRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/history:
+    get:
+      operationId: getHistoryV1
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: offset, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/history:
+    get:
+      operationId: getHistoryV2
+      tags: [Trading]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: offset, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/strategies/execute:
+    post:
+      operationId: executeStrategyV1
+      tags: [Strategies]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StrategyRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/strategies/execute:
+    post:
+      operationId: executeStrategyV2
+      tags: [Strategies]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StrategyRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/strategies:
+    get:
+      operationId: listStrategiesV1
+      tags: [Strategies]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/strategies:
+    get:
+      operationId: listStrategiesV2
+      tags: [Strategies]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/strategies/{id}:
+    get:
+      operationId: getStrategyV1
+      tags: [Strategies]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/strategies/{id}:
+    get:
+      operationId: getStrategyV2
+      tags: [Strategies]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/strategies/{id}/close:
+    post:
+      operationId: closeStrategyV1
+      tags: [Strategies]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/strategies/{id}/close:
+    post:
+      operationId: closeStrategyV2
+      tags: [Strategies]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/watchlist:
+    get:
+      operationId: getWatchlistV1
+      tags: [Watchlist]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+    post:
+      operationId: addWatchlistV1
+      tags: [Watchlist]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/watchlist:
+    get:
+      operationId: getWatchlistV2
+      tags: [Watchlist]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+    post:
+      operationId: addWatchlistV2
+      tags: [Watchlist]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/watchlist/{underlying}:
+    delete:
+      operationId: removeWatchlistV1
+      tags: [Watchlist]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/UnderlyingPath"
+      responses:
+        "204":
+          description: Removed.
+  /api/v2/watchlist/{underlying}:
+    delete:
+      operationId: removeWatchlistV2
+      tags: [Watchlist]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/UnderlyingPath"
+      responses:
+        "204":
+          description: Removed.
+  /api/v1/alerts:
+    get:
+      operationId: getAlertsV1
+      tags: [Alerts]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+    post:
+      operationId: createAlertV1
+      tags: [Alerts]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/alerts:
+    get:
+      operationId: getAlertsV2
+      tags: [Alerts]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+    post:
+      operationId: createAlertV2
+      tags: [Alerts]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/alerts/{id}:
+    delete:
+      operationId: deleteAlertV1
+      tags: [Alerts]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "204":
+          description: Removed.
+  /api/v2/alerts/{id}:
+    delete:
+      operationId: deleteAlertV2
+      tags: [Alerts]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "204":
+          description: Removed.
+  /api/v1/portfolio/payoff:
+    post:
+      operationId: calculatePortfolioPayoffV1
+      tags: [Portfolio]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JsonObject"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/portfolio/payoff:
+    post:
+      operationId: calculatePortfolioPayoffV2
+      tags: [Portfolio]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JsonObject"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v1/portfolio/greeks:
+    get:
+      operationId: getPortfolioGreeksV1
+      tags: [Portfolio]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+  /api/v2/portfolio/greeks:
+    get:
+      operationId: getPortfolioGreeksV2
+      tags: [Portfolio]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonOk"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    Underlying:
+      name: underlying
+      in: query
+      required: true
+      schema: { type: string }
+    UnderlyingPath:
+      name: underlying
+      in: path
+      required: true
+      schema: { type: string }
+    Strike:
+      name: strike
+      in: query
+      required: true
+      schema: { type: number, exclusiveMinimum: true, minimum: 0 }
+    ExpiryDays:
+      name: expiry_days
+      in: query
+      required: true
+      schema: { type: number, exclusiveMinimum: true, minimum: 0 }
+    OptionType:
+      name: option_type
+      in: query
+      required: true
+      schema: { type: string, enum: [call, put] }
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    JsonOk:
+      description: Successful JSON response.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/JsonObject"
+    ApiError:
+      description: API failure.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+  schemas:
+    JsonObject:
+      type: object
+      additionalProperties: true
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, details, request_id]
+          properties:
+            code:
+              type: string
+              enum:
+                - CLIENT_ERROR
+                - CONFLICT
+                - FORBIDDEN
+                - INSUFFICIENT_BALANCE
+                - INTERNAL_ERROR
+                - INVALID_CREDENTIALS
+                - INVALID_REQUEST
+                - NOT_FOUND
+                - RATE_LIMITED
+                - SERVICE_UNAVAILABLE
+                - UNAUTHENTICATED
+                - UNPROCESSABLE_ENTITY
+            message: { type: string }
+            details:
+              type: object
+              additionalProperties: true
+            request_id: { type: string, format: uuid }
+    SpotResponseV1:
+      type: object
+      required: [prices, vols]
+      properties:
+        prices:
+          type: object
+          additionalProperties: { type: number }
+        vols:
+          type: object
+          additionalProperties: { type: number }
+    SpotResponseV2:
+      type: object
+      required: [assets]
+      properties:
+        assets:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/AssetQuoteV2"
+    AssetQuoteV2:
+      type: object
+      required: [price, implied_vol]
+      properties:
+        price: { type: number }
+        implied_vol: { type: number }
+    VersionUsage:
+      type: object
+      required: [v1, v2]
+      properties:
+        v1: { type: integer, format: int64 }
+        v2: { type: integer, format: int64 }
+    NonceRequest:
+      type: object
+      required: [wallet_address]
+      properties:
+        wallet_address: { type: string }
+    NonceResponse:
+      type: object
+      required: [nonce, message]
+      properties:
+        nonce: { type: string }
+        message: { type: string }
+    VerifyRequest:
+      type: object
+      required: [wallet_address, message, signature]
+      properties:
+        wallet_address: { type: string }
+        message: { type: string }
+        signature:
+          type: string
+          description: Base64-encoded 64-byte Ed25519 signature.
+    VerifyResponse:
+      type: object
+      required: [token, wallet_address]
+      properties:
+        token: { type: string }
+        wallet_address: { type: string }
+    PositionRequest:
+      type: object
+      required: [underlying, option_type, position_type, strike, expiry_days, contracts]
+      properties:
+        underlying: { type: string }
+        option_type: { type: string, enum: [call, put] }
+        position_type: { type: string, enum: [long, short] }
+        strike: { type: number }
+        expiry_days: { type: number }
+        contracts: { type: integer }
+    RollRequest:
+      type: object
+      required: [strike, expiry_days]
+      properties:
+        strike: { type: number }
+        expiry_days: { type: number }
+    StrategyRequest:
+      type: object
+      required: [legs]
+      properties:
+        legs:
+          type: array
+          items:
+            $ref: "#/components/schemas/PositionRequest"
+    WatchlistRequest:
+      type: object
+      required: [underlying]
+      properties:
+        underlying: { type: string }
+    AlertRequest:
+      type: object
+      required: [underlying, condition, target_price]
+      properties:
+        underlying: { type: string }
+        condition: { type: string, enum: [above, below] }
+        target_price: { type: number }

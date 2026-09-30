@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT expires_at FROM auth_nonces WHERE nonce = ? AND wallet_address = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "expires_at",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "be744e528c12ccc16afb9187b3e0c15aeb7ebe71bacaffa12b08f755e95c840b"
+}

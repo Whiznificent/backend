@@ -1,0 +1,134 @@
+name: backup-drill
+
+# Nightly restore drill: replicate a seeded database to a MinIO test bucket
+# with Litestream, then run scripts/restore.sh against it and assert the
+# integrity / migration / ledger checks pass. The RTO printed by the restore
+# step is the number to paste into docs/runbooks/restore.md.
+#
+# Litestream is pinned to v0.5.17 (the latest release at the time of
+# writing) — bump deploy/litestream.yml's image tag and scripts/restore.sh's
+# fallback image together when upgrading.
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC nightly
+  workflow_dispatch:
+
+jobs:
+  restore-drill:
+    runs-on: ubuntu-latest
+    services:
+      minio:
+        image: minio/minio:latest
+        env:
+          MINIO_ROOT_USER: testaccesskey
+          MINIO_ROOT_PASSWORD: testsecretkey
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for MinIO
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live >/dev/null; then
+              echo "MinIO is up"; exit 0
+            fi
+            sleep 1
+          done
+          echo "MinIO did not become healthy" >&2; exit 1
+
+      - name: Create backup bucket
+        run: |
+          wget -qO /tmp/mc https://dl.min.io/client/mc/release/linux-amd64/mc
+          chmod +x /tmp/mc
+          /tmp/mc alias set local http://localhost:9000 testaccesskey testsecretkey
+          /tmp/mc mb local/zenith-backups --ignore-existing
+
+      - name: Install Litestream
+        run: |
+          wget -qO /tmp/litestream.tar.gz \
+            https://github.com/benbjohnson/litestream/releases/download/v0.5.17/litestream-v0.5.17-linux-amd64.tar.gz
+          tar -xzf /tmp/litestream.tar.gz -C /tmp
+          install /tmp/litestream /usr/local/bin/litestream
+          litestream version
+
+      - name: Seed a database
+        run: |
+          mkdir -p /tmp/zenithdb
+          cat migrations/*.sql | sqlite3 /tmp/zenithdb/zenith.db
+          # A real backend-created database carries sqlx's migration ledger;
+          # the drill seeds the schema with raw sqlite3, so create the ledger
+          # too (the restore script's migration check reads it).
+          sqlite3 /tmp/zenithdb/zenith.db "
+            CREATE TABLE IF NOT EXISTS _sqlx_migrations (
+              version BIGINT PRIMARY KEY,
+              description TEXT NOT NULL,
+              installed_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              success BOOLEAN NOT NULL,
+              checksum BLOB NOT NULL,
+              execution_time BIGINT NOT NULL
+            );
+          "
+          for f in migrations/*.sql; do
+            v="$(basename "$f" .sql | sed 's/_.*//')"
+            sqlite3 /tmp/zenithdb/zenith.db \
+              "INSERT OR REPLACE INTO _sqlx_migrations (version, description, success, checksum, execution_time) VALUES ($v, '$v', 1, x'00', 0);"
+          done
+          # One settled position (realized P&L +20) so the ledger invariant
+          # has something non-trivial to check.
+          sqlite3 /tmp/zenithdb/zenith.db "
+            INSERT INTO accounts (wallet_address) VALUES ('DRILL');
+            INSERT INTO positions
+              (id, wallet_address, underlying, strike, expiry_days, option_type,
+               position_type, contracts, entry_premium, entry_spot, status,
+               close_premium, close_spot, realized_pnl, closed_at, updated_at)
+            VALUES
+              ('drill-p1', 'DRILL', 'BTC', 70000, 30, 'call', 'long', 1,
+               100, 67000, 'closed', 120, 68000, 20,
+               '2026-09-28T01:00:00.000Z', '2026-09-28T01:00:00.000Z');
+            UPDATE accounts SET balance = 100020.0 WHERE wallet_address = 'DRILL';
+          "
+
+      - name: Write CI litestream config
+        run: |
+          cat > /tmp/litestream-ci.yml <<'EOF'
+          dbs:
+            - path: /tmp/zenithdb/zenith.db
+              replicas:
+                - type: s3
+                  bucket: zenith-backups
+                  path: zenith.db
+                  endpoint: http://localhost:9000
+                  region: us-east-1
+                  access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+                  secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+          EOF
+
+      - name: Replicate to MinIO
+        run: |
+          litestream replicate -config /tmp/litestream-ci.yml &
+          PID=$!
+          # Give litestream time to upload the initial snapshot + WAL.
+          sleep 20
+          kill "$PID" 2>/dev/null || true
+          wait "$PID" 2>/dev/null || true
+        env:
+          LITESTREAM_ACCESS_KEY_ID: testaccesskey
+          LITESTREAM_SECRET_ACCESS_KEY: testsecretkey
+
+      - name: Run restore drill
+        run: |
+          TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "restoring to $TIMESTAMP"
+          ./scripts/restore.sh "$TIMESTAMP" /tmp/zenith-restore.db
+        env:
+          LITESTREAM_CONFIG: /tmp/litestream-ci.yml
+          LITESTREAM_ACCESS_KEY_ID: testaccesskey
+          LITESTREAM_SECRET_ACCESS_KEY: testsecretkey

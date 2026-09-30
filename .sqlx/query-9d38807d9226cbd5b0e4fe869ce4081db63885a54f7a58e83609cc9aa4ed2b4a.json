@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT wallet_address, expires_at FROM sessions WHERE token = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "wallet_address",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "expires_at",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "9d38807d9226cbd5b0e4fe869ce4081db63885a54f7a58e83609cc9aa4ed2b4a"
+}

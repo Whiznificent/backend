@@ -1,0 +1,32 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "zenith-backend.fullname" . }}-api
+  labels:
+    {{- include "zenith-backend.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "zenith-backend.fullname" . }}-api
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.cpu.averageUtilization }}
+    {{- if .Values.autoscaling.requestRate.enabled }}
+    - type: External
+      external:
+        metric:
+          name: {{ .Values.autoscaling.requestRate.metricName }}
+        target:
+          type: AverageValue
+          averageValue: {{ .Values.autoscaling.requestRate.averageValue | quote }}
+    {{- end }}
+{{- end }}
