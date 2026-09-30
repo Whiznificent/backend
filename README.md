@@ -32,6 +32,12 @@ No external services required — sqlx creates and migrates the SQLite
 file on first run, and every integration test spins up its own
 throwaway temp-file database.
 
+The fund-critical math (collateral, payoff, fees) is additionally
+model-checked with [Kani](https://model-checking.github.io/kani/) over the
+integer-scaled prototypes in `math_fixed.rs` — see `docs/verification.md`
+for the property list, the `cargo kani` command, and the documented `f64`
+gap. `.github/workflows/kani.yml` runs it on every PR and nightly.
+
 ## Endpoints
 
 All `/api/v1/*` endpoints marked **auth** require an
@@ -109,6 +115,8 @@ src/
 ├── strkey.rs         # Stellar G... address <-> raw ed25519 pubkey codec
 ├── collateral.rs    # Collateral rules for writing options (100% calls, 110% puts)
 ├── payoff.rs         # Combined multi-leg P&L math (ported from the frontend's lib/payoff.ts)
+├── math_fixed.rs     # Integer-scaled prototypes of collateral/payoff/fee math (Kani-verified)
+├── kani_proofs.rs    # Kani harnesses for math_fixed, compiled only under `cargo kani`
 ├── positions.rs      # Account/position/roll/greeks handlers + the open/close tx helpers
 ├── strategies.rs     # Multi-leg atomic execution, built on positions.rs's tx helpers
 ├── history.rs         # Closed/rolled positions + stats

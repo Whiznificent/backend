@@ -25,3 +25,8 @@ tower_governor = "0.4"
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
+
+# `cfg(kani)` is defined by the Kani verifier (see src/kani_proofs.rs);
+# declare it here so rustc's check-cfg lint accepts it in normal builds too.
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }

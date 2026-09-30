@@ -1,0 +1,30 @@
+name: Kani
+
+# Bounded model checking of the fund-critical fixed-point arithmetic in
+# src/math_fixed.rs via the harnesses in src/kani_proofs.rs (issue #119).
+# Runs on every PR plus a nightly sweep, since the proofs are cheap enough
+# to gate merges but slow enough not to want them duplicated per job.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+# A push that supersedes an in-flight proof run should cancel it rather than
+# leave two solver jobs racing for the same 45-minute budget.
+concurrency:
+  group: kani-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proofs:
+    runs-on: ubuntu-latest
+    # Bounded model checking is slower than the test suite; cap it so a
+    # pathological case can't occupy a runner indefinitely.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Kani proofs
+        uses: model-checking/kani-github-action@v1
