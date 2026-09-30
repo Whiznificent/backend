@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE alerts SET triggered = 1, triggered_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE underlying = ? AND triggered = 0 AND ((condition = 'above' AND target_price <= ?) OR (condition = 'below' AND target_price >= ?))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "bb153a60731ca8296cafbed16c75ef5dd64adb276300653e5960d8a8c18387de"
+}

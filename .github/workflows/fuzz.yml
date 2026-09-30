@@ -1,0 +1,163 @@
+name: ClusterFuzzLite
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Nightly batch run at 02:00 UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      fuzz_seconds:
+        description: "Total fuzz time per target (seconds)"
+        default: "600"
+        required: false
+
+permissions:
+  contents: read
+  security-events: write  # for uploading SARIF results
+
+jobs:
+  # ── PR / push: short 5-minute per-target run ────────────────────────────────
+  fuzzing-pr:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - strkey_decode
+          - auth_nonce_message
+          - auth_verify_request
+          - black_scholes
+          - implied_vol
+          - payoff_series
+          - json_open_position
+          - json_payoff_request
+          - json_alert_request
+          - cursor_query
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@nightly
+        # cargo-fuzz requires nightly for -Z flags
+
+      - name: Cache Cargo registry + build artefacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
+          cache-on-failure: true
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+
+      - name: Run ${{ matrix.target }} (5 min budget)
+        # -timeout 30 catches any hang in the IV solver or other loops.
+        # -max_total_time caps the total wall-clock time per CI budget.
+        run: |
+          cargo fuzz run ${{ matrix.target }} \
+            fuzz/corpus/${{ matrix.target }} \
+            -- \
+            -timeout=30 \
+            -max_total_time=300 \
+            -max_len=4096
+        working-directory: ${{ github.workspace }}
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: Upload corpus (for future runs to start from)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-${{ matrix.target }}-pr-${{ github.run_id }}
+          path: fuzz/corpus/${{ matrix.target }}/
+          retention-days: 7
+
+      - name: Upload crash artefacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-${{ matrix.target }}-${{ github.run_id }}
+          path: fuzz/artifacts/${{ matrix.target }}/
+          retention-days: 30
+
+  # ── Nightly / manual: longer 10-minute per-target run ───────────────────────
+  fuzzing-nightly:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - strkey_decode
+          - auth_nonce_message
+          - auth_verify_request
+          - black_scholes
+          - implied_vol
+          - payoff_series
+          - json_open_position
+          - json_payoff_request
+          - json_alert_request
+          - cursor_query
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache Cargo registry + build artefacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
+          cache-on-failure: true
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+
+      - name: Restore corpus from last nightly (if any)
+        uses: actions/download-artifact@v4
+        with:
+          name: corpus-${{ matrix.target }}-nightly-latest
+          path: fuzz/corpus/${{ matrix.target }}/
+        continue-on-error: true  # first run — no previous corpus yet
+
+      - name: Run ${{ matrix.target }} (nightly budget)
+        run: |
+          BUDGET=${{ github.event.inputs.fuzz_seconds || '600' }}
+          cargo fuzz run ${{ matrix.target }} \
+            fuzz/corpus/${{ matrix.target }} \
+            -- \
+            -timeout=30 \
+            -max_total_time=${BUDGET} \
+            -max_len=4096
+        working-directory: ${{ github.workspace }}
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: Minimise any crashes found
+        if: failure()
+        run: |
+          for crash in fuzz/artifacts/${{ matrix.target }}/crash-*; do
+            [ -f "$crash" ] || continue
+            echo "=== Minimising $crash ==="
+            cargo fuzz tmin ${{ matrix.target }} "$crash" || true
+          done
+
+      - name: Upload corpus snapshot (kept for next nightly)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-${{ matrix.target }}-nightly-latest
+          path: fuzz/corpus/${{ matrix.target }}/
+          retention-days: 90
+
+      - name: Upload crash artefacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-nightly-${{ matrix.target }}-${{ github.run_id }}
+          path: fuzz/artifacts/${{ matrix.target }}/
+          retention-days: 90

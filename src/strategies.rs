@@ -35,6 +35,14 @@ pub async fn execute_strategy(
         ));
     }
 
+    let first_underlying = req.legs[0].underlying.clone();
+    if req.legs.iter().any(|leg| leg.underlying != first_underlying) {
+        return Err(AppError::new(
+            StatusCode::BAD_REQUEST,
+            "every leg in a strategy must share the same underlying",
+        ));
+    }
+
     let strategy_id = uuid::Uuid::new_v4().to_string();
     let mut tx = state
         .db

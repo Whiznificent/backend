@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!\" FROM positions WHERE wallet_address = ? AND strategy_id = ? AND status = 'open'",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "450632784bdba606e55a4bfc7f6af7a3a47b45081fc8e3c142a71995719c3ee9"
+}

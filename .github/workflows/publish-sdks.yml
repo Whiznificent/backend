@@ -1,0 +1,66 @@
+name: Publish SDKs
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate clients for the release
+        env:
+          SDK_VERSION: ${{ github.event.release.tag_name }}
+        run: node scripts/generate-sdks.mjs "$SDK_VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-sdks
+          path: |
+            sdk/typescript/generated/
+            sdk/rust/generated/
+          retention-days: 1
+
+  publish-typescript:
+    needs: generate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated-sdks
+          path: sdk
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Install package build dependency
+        working-directory: sdk/typescript/generated
+        run: npm install --ignore-scripts --no-package-lock --no-audit --no-fund
+      - name: Publish TypeScript SDK
+        working-directory: sdk/typescript/generated
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance
+
+  publish-rust:
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated-sdks
+          path: sdk
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Publish Rust SDK
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --manifest-path sdk/rust/generated/Cargo.toml

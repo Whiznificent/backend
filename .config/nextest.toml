@@ -1,0 +1,11 @@
+[profile.ci]
+fail-fast = false
+test-threads = 4
+
+[profile.ci.junit]
+path = "target/nextest/ci/junit.xml"
+store-success-output = false
+
+[[profile.ci.overrides]]
+filter = 'test(/_flaky$/)'
+retries = { count = 2, backoff = "fixed", delay = "1s" }

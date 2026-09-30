@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM alerts WHERE id = ? AND wallet_address = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d16441b783fa65e589c4c5093ad666ab57f7f14f7b7bb1729e2cc3c5b3940af2"
+}
