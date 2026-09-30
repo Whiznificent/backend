@@ -23,7 +23,7 @@ cargo run
 ```
 
 ```bash
-cargo test              # 11 unit tests + 29 integration tests
+cargo test              # unit + integration tests, plus the property-based invariant harness
 cargo clippy --all-targets -- -D warnings
 cargo fmt --check
 ```
@@ -31,6 +31,16 @@ cargo fmt --check
 No external services required — sqlx creates and migrates the SQLite
 file on first run, and every integration test spins up its own
 throwaway temp-file database.
+
+`tests/invariants_test.rs` is a property-based state-machine harness: it
+generates random sequences of ledger operations, steps a pure in-memory
+reference model and the real router in lockstep, and re-checks the
+global invariants (conservation, no negative balances, locked collateral
+equals the open legs' collateral, valid status transitions, cross-wallet
+isolation) after every step. It runs with a bounded case count in CI;
+the nightly workflow raises that via `PROPTEST_CASES`. Failing inputs
+shrink to a minimal sequence and are persisted under
+`proptest-regressions/`.
 
 ## Endpoints
 
