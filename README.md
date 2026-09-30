@@ -23,7 +23,7 @@ cargo run
 ```
 
 ```bash
-cargo test              # 11 unit tests + 29 integration tests
+cargo test              # unit + integration tests, plus the property-based invariant harness
 cargo clippy --all-targets -- -D warnings
 cargo fmt --check
 ```
@@ -31,6 +31,65 @@ cargo fmt --check
 No external services required — sqlx creates and migrates the SQLite
 file on first run, and every integration test spins up its own
 throwaway temp-file database.
+
+em.
+
+## Getting started
+
+```bash
+cp .env.example .env   # DATABASE_URL=sqlite://zenith.db, or leave unset for the same default
+cargo run
+# listening on 0.0.0.0:8081
+```
+
+```bash
+cargo test              # unit + integration tests, plus the property-based invariant harness
+cargo clippy --all-targets -- -D warnings
+cargo fmt --check
+```
+
+No external services required — sqlx creates and migrates the SQLite
+file on first run, and every integration test spins up its own
+throwaway temp-file database.
+
+Secrets are resolved through a pluggable `SecretProvider` (env vars by
+default; SOPS files and HashiCorp Vault are also supported) and cached in a
+`SecretStore` that fails fast at startup and fails soft on refresh. HMAC keys
+rotate through a sign-with-current / verify-with-current-or-previous ring, and
+Stellar signing can be delegated to Vault Transit or AWS KMS so the private
+key never enters process memory. See `docs/secrets-rotation.md`.
+
+`tests/invariants_test.rs` is a property-based state-machine harness: it
+generates random sequences of ledger operations, steps a pure in-memory
+reference model and the real router in lockstep, and re-checks the
+global invariants (conservation, no negative balances, locked collateral
+equals the open legs' collateral, valid status transitions, cross-wallet
+isolation) after every step. It runs with a bounded case count in CI;
+the nightly workflow raises that via `PROPTEST_CASES`. Failing inputs
+shrink to a minimal sequence and are persisted under
+`proptest-regressions/`.
+
+The fund-critical math (collateral, payoff, fees) is additionally
+model-checked with [Kani](https://model-checking.github.io/kani/) over the
+integer-scaled prototypes in `math_fixed.rs` — see `docs/verification.md`
+for the property list, the `cargo kani` command, and the documented `f64`
+gap. `.github/workflows/kani.yml` runs it on every PR and nightly.
+
+
+## Endpoints
+
+All `/api/v1/*` endpoints marked **auth** require an
+`Authorization: Bearer <token>` header from `/api/v1/auth/verify`.
+
+### Market data (public)
+
+| Endpoint | What it does |
+|---|---|
+| `GET /health` | Liveness + a DB ping |
+| `GET /api/v1/spot` | Current spot prices + base vols for all underlyings |
+| `GET /api/v1/price` | Black-Scholes premium/Greeks for one option |
+| `GET /api/v1/iv` | Implied vol for a given market price (Newton-Raphson) |
+| `GET /api/v1/chain` | Full optio
 
 ## Endpoints
 
@@ -109,6 +168,10 @@ src/
 ├── strkey.rs         # Stellar G... address <-> raw ed25519 pubkey codec
 ├── collateral.rs    # Collateral rules for writing options (100% calls, 110% puts)
 ├── payoff.rs         # Combined multi-leg P&L math (ported from the frontend's lib/payoff.ts)
+├── secrets/           # SecretProvider (env/SOPS/Vault), SecretStore, HMAC key rings, SigV4
+├── signing.rs         # Signer trait + local / Vault Transit / AWS KMS ed25519 signers
+├── math_fixed.rs     # Integer-scaled prototypes of collateral/payoff/fee math (Kani-verified)
+├── kani_proofs.rs    # Kani harnesses for math_fixed, compiled only under `cargo kani`
 ├── positions.rs      # Account/position/roll/greeks handlers + the open/close tx helpers
 ├── strategies.rs     # Multi-leg atomic execution, built on positions.rs's tx helpers
 ├── history.rs         # Closed/rolled positions + stats

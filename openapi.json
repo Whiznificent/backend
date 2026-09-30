@@ -1,0 +1,2424 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Zenith Backend API",
+    "description": "Paper-trading API for the Zenith options protocol.",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/account": {
+      "get": {
+        "tags": [
+          "crate::positions"
+        ],
+        "operationId": "get_account",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "tags": [
+          "crate::alerts"
+        ],
+        "operationId": "get_alerts",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Alert"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "crate::alerts"
+        ],
+        "operationId": "create_alert",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAlertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid alert",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown underlying",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/alerts/{id}": {
+      "delete": {
+        "tags": [
+          "crate::alerts"
+        ],
+        "operationId": "delete_alert",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Alert identifier",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Alert deleted"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Alert not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "crate::auth"
+        ],
+        "operationId": "get_me",
+        "responses": {
+          "200": {
+            "description": "Authenticated wallet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/nonce": {
+      "post": {
+        "tags": [
+          "crate::auth"
+        ],
+        "operationId": "post_nonce",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NonceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NonceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid wallet address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify": {
+      "post": {
+        "tags": [
+          "crate::auth"
+        ],
+        "operationId": "post_verify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid verification request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nonce or signature is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chain": {
+      "get": {
+        "tags": [
+          "crate"
+        ],
+        "operationId": "get_chain",
+        "parameters": [
+          {
+            "name": "underlying",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expiry_days",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OptionChainEntry"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown underlying"
+          }
+        }
+      }
+    },
+    "/api/v1/expiries/{underlying}": {
+      "get": {
+        "tags": [
+          "crate"
+        ],
+        "operationId": "get_expiry_calendar",
+        "parameters": [
+          {
+            "name": "underlying",
+            "in": "path",
+            "description": "Underlying symbol",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpiryCalendar"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown underlying"
+          }
+        }
+      }
+    },
+    "/api/v1/history": {
+      "get": {
+        "tags": [
+          "crate::history"
+        ],
+        "summary": "The trade ledger is just closed/rolled rows from `positions` — there's\nno separate append-only history table, since a position's own status\ntransition already records everything a ledger entry needs.",
+        "description": "`stats` is always computed over the FULL history regardless of\nlimit/offset — pagination only applies to which rows `trades` returns,\nsince a win/loss/pnl summary that changed depending on which page you\nrequested would be actively misleading.",
+        "operationId": "get_history",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/iv": {
+      "get": {
+        "tags": [
+          "crate"
+        ],
+        "operationId": "get_implied_vol",
+        "parameters": [
+          {
+            "name": "underlying",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "strike",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "expiry_days",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "option_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "market_price",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IvResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown underlying"
+          },
+          "422": {
+            "description": "Market price is below intrinsic value"
+          }
+        }
+      }
+    },
+    "/api/v1/openapi.json": {
+      "get": {
+        "tags": [
+          "crate::openapi"
+        ],
+        "operationId": "openapi_document",
+        "responses": {
+          "200": {
+            "description": "OpenAPI 3.1 specification",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portfolio/greeks": {
+      "get": {
+        "tags": [
+          "crate::positions"
+        ],
+        "summary": "Sums each open position's current Greeks, flipping sign for short\npositions — ported from the frontend's aggregateGreeks().",
+        "operationId": "get_portfolio_greeks",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregateGreeks"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/portfolio/payoff": {
+      "post": {
+        "tags": [
+          "crate::payoff"
+        ],
+        "summary": "Stateless P&L math over caller-supplied legs (no pricing lookup, no\nauth) — the frontend's strategy builder already has each leg's\npremium from a prior /api/v1/price call before it needs this.",
+        "operationId": "post_payoff",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoffResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payoff request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/positions": {
+      "get": {
+        "tags": [
+          "crate::positions"
+        ],
+        "summary": "Response shape is still a bare JSON array (unchanged, since the\nfrontend already consumes it that way) — total count and whether more\npages exist ride along as `X-Total-Count`/`X-Has-More` response\nheaders instead, the same pattern GitHub's API uses for exactly this\nreason: it lets pagination metadata arrive without breaking existing\ncallers that expect the body to just be the list.",
+        "operationId": "list_positions",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "path",
+            "description": "\"open\" | \"closed\" | \"rolled\" — omit to return every status.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "strategy_id",
+            "in": "path",
+            "description": "Restrict to the legs of one multi-leg strategy — omit for everything.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "path",
+            "description": "Defaults to DEFAULT_LIST_LIMIT, capped at MAX_LIST_LIMIT regardless\nof what the caller asks for.",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Position"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/positions/open": {
+      "post": {
+        "tags": [
+          "crate::positions"
+        ],
+        "operationId": "open_position",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenPositionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Position"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid position",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Insufficient buying power",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/positions/{id}/close": {
+      "post": {
+        "tags": [
+          "crate::positions"
+        ],
+        "operationId": "close_position",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Position identifier",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Position"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Position not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/positions/{id}/roll": {
+      "post": {
+        "tags": [
+          "crate::positions"
+        ],
+        "summary": "Closes the given position and immediately opens its replacement (same\nunderlying/option_type/position_type/contracts, new strike and expiry)\nas one atomic transaction — either both happen or neither does.",
+        "operationId": "roll_position",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Position identifier",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollPositionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RollResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid replacement position",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Position not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/price": {
+      "get": {
+        "tags": [
+          "crate"
+        ],
+        "operationId": "price_option",
+        "parameters": [
+          {
+            "name": "underlying",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "strike",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "expiry_days",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "option_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BSResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown underlying"
+          }
+        }
+      }
+    },
+    "/api/v1/spot": {
+      "get": {
+        "tags": [
+          "crate"
+        ],
+        "operationId": "get_spot",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats": {
+      "get": {
+        "tags": [
+          "crate"
+        ],
+        "operationId": "get_protocol_stats",
+        "responses": {
+          "200": {
+            "description": "Mock protocol statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtocolStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/strategies": {
+      "get": {
+        "tags": [
+          "crate::strategies"
+        ],
+        "summary": "Lists every multi-leg strategy for the wallet, newest-first by the\nopened_at of its first leg, with aggregate realized/unrealized P&L\nacross all of its legs. Plain single-leg positions (strategy_id NULL)\naren't strategies and don't show up here — see /api/v1/positions for\nthose.",
+        "operationId": "list_strategies",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StrategySummary"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/strategies/execute": {
+      "post": {
+        "tags": [
+          "crate::strategies"
+        ],
+        "summary": "Opens every leg of a multi-leg strategy (straddle, spread, iron\ncondor, ...) as one atomic transaction under a shared strategy_id —\neither all legs open or none do, so a mid-strategy insufficient-funds\nrejection can't leave a naked partial position behind.",
+        "operationId": "execute_strategy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteStrategyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Position"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A strategy must contain at least two legs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Insufficient buying power",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/strategies/{id}": {
+      "get": {
+        "tags": [
+          "crate::strategies"
+        ],
+        "operationId": "get_strategy",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Strategy identifier",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Strategy not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/strategies/{id}/close": {
+      "post": {
+        "tags": [
+          "crate::strategies"
+        ],
+        "summary": "Closes every currently-open leg of a strategy in one atomic\ntransaction — either every open leg closes or none do, mirroring\nexecute_strategy's all-or-nothing open. Legs already closed or rolled\nare left as-is; a roll's replacement leg (same strategy_id) still gets\nclosed normally.",
+        "operationId": "close_strategy",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Strategy identifier",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Position"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No open strategy legs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/watchlist": {
+      "get": {
+        "tags": [
+          "crate::watchlist"
+        ],
+        "operationId": "get_watchlist",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WatchlistItem"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "crate::watchlist"
+        ],
+        "operationId": "add_watchlist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddWatchlistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Watchlist item added"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown underlying",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/watchlist/{underlying}": {
+      "delete": {
+        "tags": [
+          "crate::watchlist"
+        ],
+        "operationId": "remove_watchlist",
+        "parameters": [
+          {
+            "name": "underlying",
+            "in": "path",
+            "description": "Underlying symbol",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Watchlist item removed"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Watchlist item not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ws/spot": {
+      "get": {
+        "tags": [
+          "crate::prices"
+        ],
+        "operationId": "ws_spot",
+        "responses": {
+          "101": {
+            "description": "WebSocket stream of spot-price snapshots"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "crate"
+        ],
+        "summary": "Pings the database as part of the health check — a load balancer or\norchestrator should see this fail (and stop routing traffic here) if\nthe pool is exhausted or the file's gone missing, not just get a\nhollow \"ok\" that only proves the HTTP server itself is up.",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Database-backed service health",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Account": {
+        "type": "object",
+        "required": [
+          "wallet_address",
+          "balance",
+          "collateral_locked",
+          "created_at"
+        ],
+        "properties": {
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "collateral_locked": {
+            "type": "number",
+            "format": "double"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "wallet_address": {
+            "type": "string"
+          }
+        }
+      },
+      "AddWatchlistRequest": {
+        "type": "object",
+        "required": [
+          "underlying"
+        ],
+        "properties": {
+          "underlying": {
+            "type": "string"
+          }
+        }
+      },
+      "AggregateGreeks": {
+        "type": "object",
+        "required": [
+          "delta",
+          "gamma",
+          "theta",
+          "vega"
+        ],
+        "properties": {
+          "delta": {
+            "type": "number",
+            "format": "double"
+          },
+          "gamma": {
+            "type": "number",
+            "format": "double"
+          },
+          "theta": {
+            "type": "number",
+            "format": "double"
+          },
+          "vega": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "Alert": {
+        "type": "object",
+        "required": [
+          "id",
+          "wallet_address",
+          "underlying",
+          "condition",
+          "target_price",
+          "triggered",
+          "created_at"
+        ],
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string"
+          },
+          "target_price": {
+            "type": "number",
+            "format": "double"
+          },
+          "triggered": {
+            "type": "boolean"
+          },
+          "triggered_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "underlying": {
+            "type": "string"
+          },
+          "wallet_address": {
+            "type": "string"
+          }
+        }
+      },
+      "BSResult": {
+        "type": "object",
+        "required": [
+          "premium",
+          "delta",
+          "gamma",
+          "theta",
+          "vega",
+          "rho",
+          "d1",
+          "d2",
+          "intrinsic",
+          "time_value",
+          "iv"
+        ],
+        "properties": {
+          "d1": {
+            "type": "number",
+            "format": "double"
+          },
+          "d2": {
+            "type": "number",
+            "format": "double"
+          },
+          "delta": {
+            "type": "number",
+            "format": "double"
+          },
+          "gamma": {
+            "type": "number",
+            "format": "double"
+          },
+          "intrinsic": {
+            "type": "number",
+            "format": "double"
+          },
+          "iv": {
+            "type": "number",
+            "format": "double"
+          },
+          "premium": {
+            "type": "number",
+            "format": "double"
+          },
+          "rho": {
+            "type": "number",
+            "format": "double"
+          },
+          "theta": {
+            "type": "number",
+            "format": "double"
+          },
+          "time_value": {
+            "type": "number",
+            "format": "double"
+          },
+          "vega": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ChainQuery": {
+        "type": "object",
+        "required": [
+          "underlying",
+          "expiry_days"
+        ],
+        "properties": {
+          "expiry_days": {
+            "type": "number",
+            "format": "double"
+          },
+          "underlying": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateAlertRequest": {
+        "type": "object",
+        "required": [
+          "underlying",
+          "condition",
+          "target_price"
+        ],
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "target_price": {
+            "type": "number",
+            "format": "double"
+          },
+          "underlying": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "ExecuteStrategyRequest": {
+        "type": "object",
+        "required": [
+          "legs"
+        ],
+        "properties": {
+          "legs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpenPositionRequest"
+            }
+          }
+        }
+      },
+      "ExpiryCalendar": {
+        "type": "object",
+        "required": [
+          "underlying",
+          "spot",
+          "vol",
+          "expiries"
+        ],
+        "properties": {
+          "expiries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpiryInfo"
+            }
+          },
+          "spot": {
+            "type": "number",
+            "format": "double"
+          },
+          "underlying": {
+            "type": "string"
+          },
+          "vol": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ExpiryInfo": {
+        "type": "object",
+        "required": [
+          "days_to_expiry",
+          "label",
+          "timestamp"
+        ],
+        "properties": {
+          "days_to_expiry": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "label": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "version",
+          "network",
+          "database"
+        ],
+        "properties": {
+          "database": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "HistoryQuery": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "offset": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "HistoryResponse": {
+        "type": "object",
+        "required": [
+          "trades",
+          "stats",
+          "has_more"
+        ],
+        "properties": {
+          "has_more": {
+            "type": "boolean",
+            "description": "Whether requesting the next `offset` would return more trades.\n`stats.trade_count` already IS the total across all pages, so\nunlike list_positions this doesn't need a separate response\nheader — it's just another field on an already-object-shaped body."
+          },
+          "stats": {
+            "$ref": "#/components/schemas/HistoryStats"
+          },
+          "trades": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Position"
+            }
+          }
+        }
+      },
+      "HistoryStats": {
+        "type": "object",
+        "required": [
+          "trade_count",
+          "win_count",
+          "loss_count",
+          "total_realized_pnl"
+        ],
+        "properties": {
+          "loss_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_realized_pnl": {
+            "type": "number",
+            "format": "double"
+          },
+          "trade_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "win_count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "IvQuery": {
+        "type": "object",
+        "required": [
+          "underlying",
+          "strike",
+          "expiry_days",
+          "option_type",
+          "market_price"
+        ],
+        "properties": {
+          "expiry_days": {
+            "type": "number",
+            "format": "double"
+          },
+          "market_price": {
+            "type": "number",
+            "format": "double"
+          },
+          "option_type": {
+            "type": "string"
+          },
+          "strike": {
+            "type": "number",
+            "format": "double"
+          },
+          "underlying": {
+            "type": "string"
+          }
+        }
+      },
+      "IvResult": {
+        "type": "object",
+        "required": [
+          "implied_vol"
+        ],
+        "properties": {
+          "implied_vol": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ListPositionsQuery": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Defaults to DEFAULT_LIST_LIMIT, capped at MAX_LIST_LIMIT regardless\nof what the caller asks for."
+          },
+          "offset": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "\"open\" | \"closed\" | \"rolled\" — omit to return every status."
+          },
+          "strategy_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Restrict to the legs of one multi-leg strategy — omit for everything."
+          }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "required": [
+          "wallet_address"
+        ],
+        "properties": {
+          "wallet_address": {
+            "type": "string"
+          }
+        }
+      },
+      "NonceRequest": {
+        "type": "object",
+        "required": [
+          "wallet_address"
+        ],
+        "properties": {
+          "wallet_address": {
+            "type": "string"
+          }
+        }
+      },
+      "NonceResponse": {
+        "type": "object",
+        "required": [
+          "nonce",
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "nonce": {
+            "type": "string"
+          }
+        }
+      },
+      "OpenPositionRequest": {
+        "type": "object",
+        "required": [
+          "underlying",
+          "strike",
+          "expiry_days",
+          "option_type",
+          "position_type",
+          "contracts"
+        ],
+        "properties": {
+          "contracts": {
+            "type": "number",
+            "format": "double"
+          },
+          "expiry_days": {
+            "type": "number",
+            "format": "double"
+          },
+          "option_type": {
+            "type": "string"
+          },
+          "position_type": {
+            "type": "string"
+          },
+          "strike": {
+            "type": "number",
+            "format": "double"
+          },
+          "underlying": {
+            "type": "string"
+          }
+        }
+      },
+      "OptionChainEntry": {
+        "type": "object",
+        "required": [
+          "strike",
+          "expiry_days",
+          "call",
+          "put",
+          "is_itm_call",
+          "is_itm_put"
+        ],
+        "properties": {
+          "call": {
+            "$ref": "#/components/schemas/BSResult"
+          },
+          "expiry_days": {
+            "type": "number",
+            "format": "double"
+          },
+          "is_itm_call": {
+            "type": "boolean"
+          },
+          "is_itm_put": {
+            "type": "boolean"
+          },
+          "put": {
+            "$ref": "#/components/schemas/BSResult"
+          },
+          "strike": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PayoffPoint": {
+        "type": "object",
+        "required": [
+          "spot",
+          "pnl"
+        ],
+        "properties": {
+          "pnl": {
+            "type": "number",
+            "format": "double"
+          },
+          "spot": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PayoffRequest": {
+        "type": "object",
+        "required": [
+          "legs",
+          "lo_spot",
+          "hi_spot"
+        ],
+        "properties": {
+          "hi_spot": {
+            "type": "number",
+            "format": "double"
+          },
+          "legs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PricedLeg"
+            }
+          },
+          "lo_spot": {
+            "type": "number",
+            "format": "double"
+          },
+          "steps": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "PayoffResponse": {
+        "type": "object",
+        "required": [
+          "points",
+          "net_premium"
+        ],
+        "properties": {
+          "net_premium": {
+            "type": "number",
+            "format": "double"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayoffPoint"
+            }
+          }
+        }
+      },
+      "Position": {
+        "type": "object",
+        "required": [
+          "id",
+          "wallet_address",
+          "underlying",
+          "strike",
+          "expiry_days",
+          "option_type",
+          "position_type",
+          "contracts",
+          "entry_premium",
+          "entry_spot",
+          "collateral",
+          "status",
+          "opened_at"
+        ],
+        "properties": {
+          "close_premium": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "close_spot": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "closed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "collateral": {
+            "type": "number",
+            "format": "double"
+          },
+          "contracts": {
+            "type": "number",
+            "format": "double"
+          },
+          "entry_premium": {
+            "type": "number",
+            "format": "double"
+          },
+          "entry_spot": {
+            "type": "number",
+            "format": "double"
+          },
+          "expiry_days": {
+            "type": "number",
+            "format": "double"
+          },
+          "id": {
+            "type": "string"
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "option_type": {
+            "type": "string"
+          },
+          "position_type": {
+            "type": "string"
+          },
+          "realized_pnl": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          },
+          "strategy_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "strike": {
+            "type": "number",
+            "format": "double"
+          },
+          "underlying": {
+            "type": "string"
+          },
+          "wallet_address": {
+            "type": "string"
+          }
+        }
+      },
+      "PriceQuery": {
+        "type": "object",
+        "required": [
+          "underlying",
+          "strike",
+          "expiry_days",
+          "option_type"
+        ],
+        "properties": {
+          "expiry_days": {
+            "type": "number",
+            "format": "double"
+          },
+          "option_type": {
+            "type": "string"
+          },
+          "strike": {
+            "type": "number",
+            "format": "double"
+          },
+          "underlying": {
+            "type": "string"
+          }
+        }
+      },
+      "PricedLeg": {
+        "type": "object",
+        "required": [
+          "option_type",
+          "position_type",
+          "strike",
+          "contracts",
+          "premium"
+        ],
+        "properties": {
+          "contracts": {
+            "type": "number",
+            "format": "double"
+          },
+          "option_type": {
+            "type": "string"
+          },
+          "position_type": {
+            "type": "string"
+          },
+          "premium": {
+            "type": "number",
+            "format": "double"
+          },
+          "strike": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ProtocolStatsResponse": {
+        "type": "object",
+        "required": [
+          "total_series",
+          "active_series",
+          "total_premium_volume",
+          "open_interest",
+          "unique_traders",
+          "markets",
+          "network"
+        ],
+        "properties": {
+          "active_series": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "markets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "network": {
+            "type": "string"
+          },
+          "open_interest": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_premium_volume": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_series": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "unique_traders": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "RollPositionRequest": {
+        "type": "object",
+        "required": [
+          "new_strike",
+          "new_expiry_days"
+        ],
+        "properties": {
+          "new_expiry_days": {
+            "type": "number",
+            "format": "double"
+          },
+          "new_strike": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RollResult": {
+        "type": "object",
+        "required": [
+          "closed",
+          "opened"
+        ],
+        "properties": {
+          "closed": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "opened": {
+            "$ref": "#/components/schemas/Position"
+          }
+        }
+      },
+      "SpotResponse": {
+        "type": "object",
+        "required": [
+          "prices",
+          "vols"
+        ],
+        "properties": {
+          "prices": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "vols": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "StrategyDetail": {
+        "type": "object",
+        "required": [
+          "strategy_id",
+          "status",
+          "realized_pnl",
+          "unrealized_pnl",
+          "legs"
+        ],
+        "properties": {
+          "legs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Position"
+            }
+          },
+          "realized_pnl": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          },
+          "strategy_id": {
+            "type": "string"
+          },
+          "unrealized_pnl": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "StrategySummary": {
+        "type": "object",
+        "required": [
+          "strategy_id",
+          "underlying",
+          "leg_count",
+          "open_leg_count",
+          "status",
+          "opened_at",
+          "realized_pnl",
+          "unrealized_pnl"
+        ],
+        "properties": {
+          "leg_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "open_leg_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "realized_pnl": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          },
+          "strategy_id": {
+            "type": "string"
+          },
+          "underlying": {
+            "type": "string",
+            "description": "The underlying shared by every leg opened via execute_strategy. A\nroll can only replace a leg with the same underlying, so this stays\nsingular for the lifetime of the strategy."
+          },
+          "unrealized_pnl": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "VerifyRequest": {
+        "type": "object",
+        "required": [
+          "wallet_address",
+          "message",
+          "signature"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "signature": {
+            "type": "string"
+          },
+          "wallet_address": {
+            "type": "string"
+          }
+        }
+      },
+      "VerifyResponse": {
+        "type": "object",
+        "required": [
+          "token",
+          "wallet_address"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "wallet_address": {
+            "type": "string"
+          }
+        }
+      },
+      "WatchlistItem": {
+        "type": "object",
+        "required": [
+          "wallet_address",
+          "underlying",
+          "added_at"
+        ],
+        "properties": {
+          "added_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "underlying": {
+            "type": "string"
+          },
+          "wallet_address": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "opaque session token"
+      }
+    }
+  }
+}

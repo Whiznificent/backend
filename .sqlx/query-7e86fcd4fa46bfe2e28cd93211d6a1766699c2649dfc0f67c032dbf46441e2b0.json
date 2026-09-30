@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE positions SET status = 'closed', close_premium = ?, close_spot = ?, realized_pnl = ?, closed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "7e86fcd4fa46bfe2e28cd93211d6a1766699c2649dfc0f67c032dbf46441e2b0"
+}

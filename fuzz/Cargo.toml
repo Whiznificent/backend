@@ -1,0 +1,84 @@
+[package]
+name = "zenith-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+zenith-backend = { path = "..", features = [] }
+serde_json = "1"
+serde_urlencoded = "0.7"
+serde = { version = "1", features = ["derive"] }
+
+# Needed for auth fuzz target (sign-in message verification)
+data-encoding = "2"
+ed25519-dalek = "2"
+rand = "0.8"
+
+# Prevent libfuzzer-sys from being optimised out with LTO
+# (profile.release is defined at workspace root for symbolised crash traces)
+
+[[bin]]
+name = "strkey_decode"
+path = "fuzz_targets/strkey_decode.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "auth_nonce_message"
+path = "fuzz_targets/auth_nonce_message.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "auth_verify_request"
+path = "fuzz_targets/auth_verify_request.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "black_scholes"
+path = "fuzz_targets/black_scholes.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "implied_vol"
+path = "fuzz_targets/implied_vol.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "payoff_series"
+path = "fuzz_targets/payoff_series.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "json_open_position"
+path = "fuzz_targets/json_open_position.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "json_payoff_request"
+path = "fuzz_targets/json_payoff_request.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "json_alert_request"
+path = "fuzz_targets/json_alert_request.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "cursor_query"
+path = "fuzz_targets/cursor_query.rs"
+test = false
+doc = false

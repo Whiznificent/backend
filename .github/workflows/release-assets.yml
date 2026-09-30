@@ -1,0 +1,70 @@
+name: Release assets
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Binary (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: taiki-e/install-action@cross
+      - uses: Swatinem/rust-cache@v2
+      - name: Build release binary
+        run: cross build --locked --release --target ${{ matrix.target }}
+      - name: Package binary
+        env:
+          TARGET: ${{ matrix.target }}
+          VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          mkdir -p dist
+          tar -C "target/$TARGET/release" -czf "dist/zenith-backend-${VERSION}-${TARGET}.tar.gz" zenith-backend
+          sha256sum "dist/zenith-backend-${VERSION}-${TARGET}.tar.gz" > "dist/zenith-backend-${VERSION}-${TARGET}.tar.gz.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  sbom:
+    name: Release SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: zenith-backend.spdx.json
+          upload-release-assets: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-binaries:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: binaries-*
+          merge-multiple: true
+      - name: Upload release binaries
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$RELEASE_TAG" release-assets/* --clobber

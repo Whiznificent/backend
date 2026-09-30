@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE accounts SET balance = ?, collateral_locked = ? WHERE wallet_address = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "55c916b7f501bb67c3c171143c46195ca45f86dfb0bd6c4ff14fcb1fbc8d9c48"
+}

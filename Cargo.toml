@@ -1,3 +1,12 @@
+[workspace]
+members = [".", "fuzz"]
+
+# When building fuzz targets in release mode (cargo fuzz run ...) we want
+# debug info so crash stack traces are symbolised.  This is a workspace-level
+# profile so it applies to both the main crate and the fuzz crate.
+[profile.release]
+debug = true
+
 [package]
 name = "zenith-backend"
 version = "0.1.0"
@@ -22,6 +31,17 @@ ed25519-dalek = "2"
 data-encoding = "2"
 rand = "0.8"
 tower_governor = "0.4"
+secrecy = "0.8"
+hmac = "0.12"
+sha2 = "0.10"
+async-trait = "0.1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
+proptest = "1"
+
+# `cfg(kani)` is defined by the Kani verifier (see src/kani_proofs.rs);
+# declare it here so rustc's check-cfg lint accepts it in normal builds too.
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }

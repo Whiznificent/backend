@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM watchlist WHERE wallet_address = ? AND underlying = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d7f53b0aa1b92f9f9938943de8f108c54adc670e8e3dece69d731209061ca9c5"
+}

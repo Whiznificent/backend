@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE positions SET status = 'rolled' WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "d4566375adcbdc572386119ab550b86579beb8739388572bb085a9ed15013b9e"
+}
