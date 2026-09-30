@@ -1,0 +1,18 @@
+name: Perf
+
+on:
+  # Nightly: the full performance regression suite (100k positions / 10k
+  # wallets / 1M ticks) is too slow for every PR. The fast smoke subset runs
+  # on every PR as part of the normal `cargo test` job.
+  schedule:
+    - cron: "0 3 * * *"
+
+jobs:
+  query-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run the full query-plan and latency suite
+        run: ZENITH_PERF_FULL=1 cargo test --test query_plan_test -- --nocapture

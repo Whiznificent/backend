@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO watchlist (wallet_address, underlying) VALUES (?, ?) ON CONFLICT(wallet_address, underlying) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c0a5e249d872a52a6b993940badc54ce1d683d5e5cc3a1adb451618f26133bcf"
+}

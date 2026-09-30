@@ -1,0 +1,27 @@
+# Litestream sidecar configuration for continuous replication of the
+# Zenith SQLite database to object storage.
+#
+# Litestream tails the database's WAL and uploads frames to the replica as
+# they are written, so the replica is typically only a few seconds behind the
+# primary — the RPO is well under 10 seconds (see docs/runbooks/restore.md).
+#
+# Environment variables are expanded by Litestream at load time
+# (${VAR} syntax). Set them in the container environment (see
+# deploy/docker-compose.yml) or in the shell before running litestream.
+#
+# Usage:
+#   litestream replicate -config deploy/litestream.yml
+#   litestream restore  -config deploy/litestream.yml -timestamp <ts> -o /tmp/zenith.db
+
+dbs:
+  - path: /data/zenith.db
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: zenith.db
+        # Omit endpoint/region for AWS S3. Set both for S3-compatible
+        # stores (MinIO, R2, ...).
+        endpoint: ${LITESTREAM_ENDPOINT}
+        region: ${LITESTREAM_REGION}
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}

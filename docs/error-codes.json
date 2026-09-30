@@ -1,0 +1,14 @@
+[
+  {"code":"CLIENT_ERROR","http_status":400,"description":"Unclassified client-side failure."},
+  {"code":"CONFLICT","http_status":409,"description":"The request conflicts with current resource state."},
+  {"code":"FORBIDDEN","http_status":403,"description":"The authenticated caller is not permitted to perform this operation."},
+  {"code":"INSUFFICIENT_BALANCE","http_status":422,"description":"The account balance or available collateral is insufficient."},
+  {"code":"INTERNAL_ERROR","http_status":500,"description":"Unexpected server-side failure."},
+  {"code":"INVALID_CREDENTIALS","http_status":[400,401],"description":"A supplied wallet address or signature credential is invalid."},
+  {"code":"INVALID_REQUEST","http_status":400,"description":"The request is malformed or has invalid fields."},
+  {"code":"NOT_FOUND","http_status":404,"description":"The requested resource does not exist or is not visible to this caller."},
+  {"code":"RATE_LIMITED","http_status":429,"description":"The caller exceeded the configured request rate."},
+  {"code":"SERVICE_UNAVAILABLE","http_status":503,"description":"A required dependency is unavailable."},
+  {"code":"UNAUTHENTICATED","http_status":401,"description":"Authentication is missing, invalid, expired, or failed."},
+  {"code":"UNPROCESSABLE_ENTITY","http_status":422,"description":"The request is syntactically valid but cannot be processed."}
+]

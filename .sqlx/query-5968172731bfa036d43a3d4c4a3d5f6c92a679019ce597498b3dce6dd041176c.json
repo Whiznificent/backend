@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT wallet_address AS \"wallet_address!\", underlying AS \"underlying!\", added_at FROM watchlist WHERE wallet_address = ? ORDER BY added_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "wallet_address!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "underlying!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "added_at",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "5968172731bfa036d43a3d4c4a3d5f6c92a679019ce597498b3dce6dd041176c"
+}

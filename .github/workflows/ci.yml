@@ -4,32 +4,178 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+  codegen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - run: cargo build --all-targets
       - run: cargo test
+      - run: cargo run --bin generate-openapi -- --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/generate-error-catalogue.mjs
+      - run: git diff --exit-code -- docs/error-catalogue.md
+      - run: node scripts/generate-sdks.mjs 0.1.0
+      - run: git diff --exit-code -- sdk && test -z "$(git ls-files --others --exclude-standard -- sdk)"
+      - run: npm install --ignore-scripts --no-package-lock --no-audit --no-fund
+        working-directory: sdk/typescript/generated
+      - run: npm run build
+        working-directory: sdk/typescript/generated
+      - run: cargo check --manifest-path sdk/rust/generated/Cargo.toml
+      - name: Verify generated contract bindings are up to date
+        run: cargo xtask codegen --check
+
+  sqlx-prepare:
+
+  test:
+    name: Tests (shard ${{ matrix.shard }}/4)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@nextest
+      - uses: Swatinem/rust-cache@v2
+      # sqlx-cli must match the sqlx version in Cargo.toml (0.8.x) so the
+      # offline metadata it generates is byte-identical to what the macros
+      # committed in .sqlx/ were built against.
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli --version "^0.8"
+      # The macros describe their queries live against a real database, so
+      # prepare needs a freshly migrated one to check against.
+      - name: Create a freshly migrated database
+        run: DATABASE_URL=sqlite://ci-prepare.db sqlx migrate run
+      - name: Check offline query metadata is up to date
+        run: DATABASE_URL=sqlite://ci-prepare.db cargo sqlx prepare --check
+      - name: Run isolated tests
+        run: cargo nextest run --workspace --all-targets --profile ci --partition count:${{ matrix.shard }}/4
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-${{ matrix.shard }}
+          path: target/nextest/ci/junit.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+  coverage:
+    name: Coverage thresholds and diff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v2
+      - name: Measure PR coverage
+        run: cargo llvm-cov --workspace --all-targets --json --output-path coverage.json
+      - name: Measure base coverage
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add --detach /tmp/backendd-base "$BASE_SHA"
+          CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" \
+            cargo llvm-cov --manifest-path /tmp/backendd-base/Cargo.toml \
+              --workspace --all-targets --json \
+              --output-path "$GITHUB_WORKSPACE/base-coverage.json"
+      - name: Enforce module budgets and prepare report
+        id: report
+        run: |
+          if [ -f base-coverage.json ]; then
+            python3 scripts/coverage_report.py coverage.json --base base-coverage.json --comment coverage-comment.md
+          else
+            python3 scripts/coverage_report.py coverage.json --comment coverage-comment.md
+          fi
+      - name: Comment coverage diff
+        if: always() && steps.report.outcome != 'skipped' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python3 scripts/post_coverage_comment.py coverage-comment.md
 
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           components: clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - run: cargo clippy --all-targets -- -D warnings
+
+      - name: Cache cargo registry and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build
+        run: cargo build --verbose
+
+      - name: Run tests
+        run: cargo test --verbose
+
+      - name: Verify golden vectors are up to date
+        run: |
+          cargo run --bin gen-vectors -- --force
+          git diff --exit-code tests/fixtures/pricing_vectors.v1.json
+
+      - name: Upload golden pricing vectors
+        uses: actions/upload-artifact@v4
+        with:
+          name: pricing-vectors-v1
+          path: tests/fixtures/pricing_vectors.v1.json
+          if-no-files-found: error
 
   fmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           components: rustfmt
       - run: cargo fmt --check
+
+  supply-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+      - run: cargo install --locked cargo-deny --version 0.20.2
+      - run: cargo deny check

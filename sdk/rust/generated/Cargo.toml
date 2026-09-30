@@ -1,0 +1,16 @@
+[package]
+name = "zenith_backend_client"
+version = "0.1.0"
+authors = ["Zenith Protocol Contributors"]
+description = "Zenith paper-trading API. V1 retains legacy error bodies by default; v2 returns the structured ApiError envelope. Both API versions remain available side by side. "
+license = "MIT"
+repository = "https://github.com/ngoziobidigwe212/backendd"
+edition = "2021"
+
+[dependencies]
+serde = { version = "^1.0", features = ["derive"] }
+serde_json = "^1.0"
+serde_repr = "^0.1"
+url = "^2.5"
+uuid = { version = "^1.8", features = ["serde", "v4"] }
+reqwest = { version = "^0.12", default-features = false, features = ["json", "multipart"] }

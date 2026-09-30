@@ -37,19 +37,20 @@ async fn straddle_payoff_is_symmetric_v_shape() {
 #[tokio::test]
 async fn payoff_rejects_empty_legs() {
     let app = TestApp::spawn().await;
-    let (status, _) = app
+    let (status, body) = app
         .post(
             "/api/v1/portfolio/payoff",
             serde_json::json!({ "legs": [], "lo_spot": 1, "hi_spot": 2 }),
         )
         .await;
-    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(body["details"]["fields"].as_array().unwrap().iter().any(|entry| entry["field"] == "legs"));
 }
 
 #[tokio::test]
 async fn payoff_rejects_inverted_spot_range() {
     let app = TestApp::spawn().await;
-    let (status, _) = app
+    let (status, body) = app
         .post(
             "/api/v1/portfolio/payoff",
             serde_json::json!({
@@ -58,7 +59,8 @@ async fn payoff_rejects_inverted_spot_range() {
             }),
         )
         .await;
-    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(body["details"]["fields"].as_array().unwrap().iter().any(|entry| entry["field"] == "hi_spot"));
 }
 
 #[tokio::test]

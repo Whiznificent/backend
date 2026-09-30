@@ -90,3 +90,16 @@ async fn auth_nonce_is_rate_limited_per_ip() {
         "expected at least one 429 among 20 rapid requests against a burst_size=10 limit, got: {statuses:?}"
     );
 }
+
+#[tokio::test]
+async fn responses_include_standard_rate_limit_headers_and_api_key_tier() {
+    let app = TestApp::spawn().await;
+    let (status, headers, _) = app
+        .get_raw("/api/v1/spot", None, Some(("x-api-key", "test-client-key")))
+        .await;
+
+    assert_eq!(status, axum::http::StatusCode::OK);
+    assert_eq!(headers["ratelimit-limit"], "1200");
+    assert!(headers.contains_key("ratelimit-remaining"));
+    assert!(headers.contains_key("ratelimit-reset"));
+}

@@ -1,0 +1,18 @@
+{
+  "src/alerts.rs": 45,
+  "src/auth.rs": 45,
+  "src/collateral.rs": 55,
+  "src/db.rs": 40,
+  "src/error.rs": 45,
+  "src/history.rs": 45,
+  "src/lib.rs": 35,
+  "src/models.rs": 50,
+  "src/payoff.rs": 65,
+  "src/positions.rs": 45,
+  "src/prices.rs": 25,
+  "src/rate_limit_key.rs": 55,
+  "src/request_id.rs": 75,
+  "src/strategies.rs": 45,
+  "src/strkey.rs": 65,
+  "src/watchlist.rs": 45
+}

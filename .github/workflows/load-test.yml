@@ -1,0 +1,45 @@
+name: Load test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  reduced-load-test:
+    name: Reduced k6 workload
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: grafana/setup-k6-action@v1
+      - uses: Swatinem/rust-cache@v2
+      - name: Build and start API
+        run: |
+          cargo build --release
+          DATABASE_URL=sqlite:///tmp/zenith-load-test.db ./target/release/zenith-backend > /tmp/zenith-api.log 2>&1 &
+          echo $! > /tmp/zenith-api.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8081/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/zenith-api.log
+          exit 1
+      - name: Create isolated trader sessions
+        env:
+          BASE_URL: http://127.0.0.1:8081
+          K6_TOKEN_COUNT: "10"
+        run: node scripts/create_k6_tokens.mjs > /tmp/k6-tokens.txt
+      - name: Run reduced workload
+        env:
+          BASE_URL: http://127.0.0.1:8081
+          K6_VUS: "2"
+          K6_DURATION: 20s
+        run: TRADER_TOKENS="$(cat /tmp/k6-tokens.txt)" k6 run loadtests/scenarios.js
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -f /tmp/zenith-api.pid ]; then kill "$(cat /tmp/zenith-api.pid)" || true; fi
