@@ -1,4 +1,8 @@
 /target
+.git
+.github
+coverage.json
+coverage-comment.md
 *.db
 *.db-journal
 .env

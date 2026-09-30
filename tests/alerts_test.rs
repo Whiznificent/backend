@@ -101,3 +101,61 @@ async fn deleting_someone_elses_alert_404s() {
         "a wallet must not be able to delete another wallet's alert"
     );
 }
+
+#[tokio::test]
+async fn portfolio_delta_band_does_not_require_an_underlying_or_target_price() {
+    let app = TestApp::spawn().await;
+    let token = app.login().await;
+
+    let (status, alert) = app
+        .post_with(
+            "/api/v1/alerts",
+            serde_json::json!({
+                "condition": "portfolio_delta_outside",
+                "lower_bound": -10.0,
+                "upper_bound": 10.0
+            }),
+            Some(&token),
+        )
+        .await;
+
+    assert_eq!(status, StatusCode::OK, "{alert}");
+    assert_eq!(alert["underlying"], "PORTFOLIO");
+    assert_eq!(alert["lower_bound"], -10.0);
+    assert_eq!(alert["upper_bound"], 10.0);
+}
+
+#[tokio::test]
+async fn position_pnl_alert_derives_its_underlying_from_the_owned_position() {
+    let app = TestApp::spawn().await;
+    let token = app.login().await;
+    let (_, position) = app
+        .post_with(
+            "/api/v1/positions/open",
+            serde_json::json!({
+                "underlying": "BTC",
+                "strike": 70000,
+                "expiry_days": 30,
+                "option_type": "call",
+                "position_type": "long",
+                "contracts": 1
+            }),
+            Some(&token),
+        )
+        .await;
+
+    let (status, alert) = app
+        .post_with(
+            "/api/v1/alerts",
+            serde_json::json!({
+                "condition": "position_pnl_above",
+                "target_price": 100.0,
+                "position_id": position["id"]
+            }),
+            Some(&token),
+        )
+        .await;
+
+    assert_eq!(status, StatusCode::OK, "{alert}");
+    assert_eq!(alert["underlying"], "BTC");
+}

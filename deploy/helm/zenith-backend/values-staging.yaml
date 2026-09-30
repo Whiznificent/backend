@@ -1,0 +1,22 @@
+replicaCount: 1
+worker:
+  replicaCount: 1
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  cpu:
+    averageUtilization: 75
+  requestRate:
+    enabled: true
+    metricName: http_requests_per_second
+    averageValue: "30"
+
+externalSecrets:
+  enabled: true
+  secretStoreRef:
+    name: staging-secrets
+    kind: ClusterSecretStore
+  remoteKey: zenith/staging/backend
+  targetName: zenith-backend-runtime

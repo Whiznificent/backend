@@ -1,4 +1,8 @@
 /target
+/sdk/**/target/
+/sdk/**/node_modules/
+/sdk/**/dist/
+/sdk/rust/generated/Cargo.lock
 .env
 .env.local
 .DS_Store

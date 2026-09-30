@@ -21,6 +21,11 @@ use tower::ServiceExt;
 pub struct TestApp {
     router: axum::Router,
     db_path: std::path::PathBuf,
+    /// A clone of the AppState the router was built over. The `Arc<Mutex<_>>`
+    /// maps inside are shared with the router, so a test can nudge spot
+    /// prices/vols directly (deterministic inputs) without going through the
+    /// WebSocket feed or the background simulator, which TestApp never spawns.
+    pub state: zenith_backend::AppState,
 }
 
 impl Drop for TestApp {
@@ -36,9 +41,21 @@ impl TestApp {
         let pool = zenith_backend::db::init_pool(&database_url).await;
         let state = zenith_backend::AppState::new(pool);
         Self {
-            router: zenith_backend::build_router(state),
+            router: zenith_backend::build_router(state.clone()),
             db_path,
+            state,
         }
+    }
+
+    /// Overwrites the spot price (and optionally the base vol) for one
+    /// underlying on the shared AppState — lets a test pin deterministic
+    /// inputs instead of living with the seeded constants.
+    pub fn set_spot(&self, underlying: &str, spot: f64) {
+        self.state
+            .spot_prices
+            .lock()
+            .unwrap()
+            .insert(underlying.to_string(), spot);
     }
 
     async fn send(&self, req: Request<Body>) -> (StatusCode, Value) {
@@ -141,6 +158,13 @@ impl TestApp {
     /// Full sign-in-with-wallet flow for a fresh random keypair, returning
     /// a bearer token ready to use in Authorization headers.
     pub async fn login(&self) -> String {
+        self.login_account().await.1
+    }
+
+    /// Same as `login`, but also hands back the wallet's Stellar address so a
+    /// test can correlate the session with the `wallet_address` column on the
+    /// rows/account it owns (e.g. cross-wallet isolation invariants).
+    pub async fn login_account(&self) -> (String, String) {
         let mut seed = [0u8; 32];
         rand::thread_rng().fill_bytes(&mut seed);
         let signing_key = SigningKey::from_bytes(&seed);
@@ -164,6 +188,7 @@ impl TestApp {
                 serde_json::json!({ "wallet_address": address, "message": message, "signature": sig_b64 }),
             )
             .await;
-        verify_resp["token"].as_str().unwrap().to_string()
+        let token = verify_resp["token"].as_str().unwrap().to_string();
+        (address, token)
     }
 }

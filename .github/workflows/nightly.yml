@@ -1,0 +1,22 @@
+name: Nightly
+
+# The invariant harness runs bounded in ci.yml (default case count). This
+# job re-runs it nightly with a much larger case budget, where the
+# combinatorial interaction space (rolls x strategies x closes x price
+# moves) gets the exploration it deserves without slowing every PR.
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Ledger invariant harness (large case budget)
+        env:
+          PROPTEST_CASES: "512"
+        run: cargo test --test invariants_test -- --nocapture

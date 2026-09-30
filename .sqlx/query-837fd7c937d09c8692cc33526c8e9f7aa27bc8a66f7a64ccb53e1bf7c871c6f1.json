@@ -1,0 +1,122 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!\", wallet_address, underlying, strike, expiry_days, option_type, position_type, contracts, entry_premium, entry_spot, collateral, status, close_premium, close_spot, realized_pnl, opened_at, closed_at, strategy_id FROM positions WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "wallet_address",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "underlying",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "strike",
+        "ordinal": 3,
+        "type_info": "Float"
+      },
+      {
+        "name": "expiry_days",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "option_type",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "position_type",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "contracts",
+        "ordinal": 7,
+        "type_info": "Float"
+      },
+      {
+        "name": "entry_premium",
+        "ordinal": 8,
+        "type_info": "Float"
+      },
+      {
+        "name": "entry_spot",
+        "ordinal": 9,
+        "type_info": "Float"
+      },
+      {
+        "name": "collateral",
+        "ordinal": 10,
+        "type_info": "Float"
+      },
+      {
+        "name": "status",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "close_premium",
+        "ordinal": 12,
+        "type_info": "Float"
+      },
+      {
+        "name": "close_spot",
+        "ordinal": 13,
+        "type_info": "Float"
+      },
+      {
+        "name": "realized_pnl",
+        "ordinal": 14,
+        "type_info": "Float"
+      },
+      {
+        "name": "opened_at",
+        "ordinal": 15,
+        "type_info": "Text"
+      },
+      {
+        "name": "closed_at",
+        "ordinal": 16,
+        "type_info": "Text"
+      },
+      {
+        "name": "strategy_id",
+        "ordinal": 17,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "837fd7c937d09c8692cc33526c8e9f7aa27bc8a66f7a64ccb53e1bf7c871c6f1"
+}

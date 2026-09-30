@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM auth_nonces WHERE nonce = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "0adfbcca2ad5394dcff7d04dd1e943db926114095bf1db68a1bca127251faab9"
+}

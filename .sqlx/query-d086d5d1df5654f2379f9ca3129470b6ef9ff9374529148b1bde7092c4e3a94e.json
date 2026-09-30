@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) AS trade_count, COALESCE(SUM(CASE WHEN realized_pnl > 0 THEN 1 ELSE 0 END), 0) AS \"win_count!: i64\", COALESCE(SUM(CASE WHEN realized_pnl < 0 THEN 1 ELSE 0 END), 0) AS \"loss_count!: i64\", SUM(realized_pnl) AS \"total_realized_pnl: _\" FROM positions WHERE wallet_address = ? AND status IN ('closed', 'rolled')",
+  "describe": {
+    "columns": [
+      {
+        "name": "trade_count",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "win_count!: i64",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "loss_count!: i64",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "total_realized_pnl: _",
+        "ordinal": 3,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "d086d5d1df5654f2379f9ca3129470b6ef9ff9374529148b1bde7092c4e3a94e"
+}

@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT wallet_address AS \"wallet_address!\", balance, collateral_locked, created_at FROM accounts WHERE wallet_address = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "wallet_address!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "balance",
+        "ordinal": 1,
+        "type_info": "Float"
+      },
+      {
+        "name": "collateral_locked",
+        "ordinal": 2,
+        "type_info": "Float"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "65632c3886c52785332582f2726bc9d6c63db61e4c28cbf3af7eea60b66d110d"
+}

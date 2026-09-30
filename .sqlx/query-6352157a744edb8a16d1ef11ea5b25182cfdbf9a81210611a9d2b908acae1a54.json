@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!\", wallet_address, underlying, condition, target_price, triggered AS \"triggered: bool\", created_at, triggered_at FROM alerts WHERE wallet_address = ? ORDER BY created_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "wallet_address",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "underlying",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "condition",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "target_price",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "triggered: bool",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "triggered_at",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "6352157a744edb8a16d1ef11ea5b25182cfdbf9a81210611a9d2b908acae1a54"
+}

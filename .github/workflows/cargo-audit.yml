@@ -1,0 +1,63 @@
+name: Scheduled cargo audit
+
+on:
+  schedule:
+    - cron: "23 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+      - run: cargo install --locked cargo-audit --version 0.22.2
+      - id: audit
+        name: Audit dependencies
+        continue-on-error: true
+        run: |
+          set +e
+          cargo audit --json > cargo-audit.json
+          result=$?
+          echo "exit_code=$result" >> "$GITHUB_OUTPUT"
+          cat cargo-audit.json >> "$GITHUB_STEP_SUMMARY"
+          exit "$result"
+      - name: File or update security issue
+        if: steps.audit.outcome == 'failure'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const fs = require("fs");
+            const title = "Scheduled cargo audit found vulnerabilities";
+            const report = fs.readFileSync("cargo-audit.json", "utf8").slice(0, 50000);
+            const { owner, repo } = context.repo;
+            const existing = await github.rest.issues.listForRepo({
+              owner, repo, state: "open", per_page: 100
+            });
+            const body = [
+              "The scheduled `cargo audit` run found advisories in the dependency tree.",
+              "",
+              `Workflow run: ${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+              "",
+              "<details><summary>cargo-audit JSON report</summary>",
+              "",
+              "```json",
+              report,
+              "```",
+              "</details>"
+            ].join("\n");
+            const issue = existing.data.find(item => item.title === title);
+            if (issue) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: issue.number,
+                body: `A new scheduled audit failed.\n\n${body}`
+              });
+            } else {
+              await github.rest.issues.create({
+                owner, repo, title, body
+              });
+            }

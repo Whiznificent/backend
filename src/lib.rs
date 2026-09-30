@@ -25,6 +25,8 @@ pub mod positions;
 pub mod prices;
 pub mod rate_limit_key;
 pub mod request_id;
+pub mod secrets;
+pub mod signing;
 pub mod strategies;
 pub mod strkey;
 pub mod watchlist;
@@ -73,7 +75,7 @@ fn norm_pdf(x: f64) -> f64 {
 /// so that outer clamp is a no-op there and is reproduced as a no-op here
 /// too, on purpose, for numeric parity rather than "fixing" a shipped quirk
 /// unilaterally on just one side.
-pub(crate) fn smile_vol(base: f64, moneyness: f64) -> f64 {
+pub fn smile_vol(base: f64, moneyness: f64) -> f64 {
     let m = moneyness - 1.0;
     let wing = (m.abs() - 0.15).powi(2);
     (base - 0.15 * m + 0.08 * m * m + 0.12 * wing).max(0.1)
