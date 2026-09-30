@@ -32,6 +32,13 @@ No external services required — sqlx creates and migrates the SQLite
 file on first run, and every integration test spins up its own
 throwaway temp-file database.
 
+Secrets are resolved through a pluggable `SecretProvider` (env vars by
+default; SOPS files and HashiCorp Vault are also supported) and cached in a
+`SecretStore` that fails fast at startup and fails soft on refresh. HMAC keys
+rotate through a sign-with-current / verify-with-current-or-previous ring, and
+Stellar signing can be delegated to Vault Transit or AWS KMS so the private
+key never enters process memory. See `docs/secrets-rotation.md`.
+
 ## Endpoints
 
 All `/api/v1/*` endpoints marked **auth** require an
@@ -109,6 +116,8 @@ src/
 ├── strkey.rs         # Stellar G... address <-> raw ed25519 pubkey codec
 ├── collateral.rs    # Collateral rules for writing options (100% calls, 110% puts)
 ├── payoff.rs         # Combined multi-leg P&L math (ported from the frontend's lib/payoff.ts)
+├── secrets/           # SecretProvider (env/SOPS/Vault), SecretStore, HMAC key rings, SigV4
+├── signing.rs         # Signer trait + local / Vault Transit / AWS KMS ed25519 signers
 ├── positions.rs      # Account/position/roll/greeks handlers + the open/close tx helpers
 ├── strategies.rs     # Multi-leg atomic execution, built on positions.rs's tx helpers
 ├── history.rs         # Closed/rolled positions + stats
